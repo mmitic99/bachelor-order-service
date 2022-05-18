@@ -16,6 +16,7 @@
 	<properties>
 		<java.version>17</java.version>
 		<spring-cloud.version>2021.0.2</spring-cloud.version>
+		<inventory-service-api.version>0.0.1-SNAPSHOT</inventory-service-api.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -43,6 +44,19 @@
 			<groupId>org.modelmapper</groupId>
 			<artifactId>modelmapper</artifactId>
 			<version>3.1.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>bachelor</groupId>
+			<artifactId>InventoryService</artifactId>
+			<version>${inventory-service-api.version}</version>
+			<classifier>api</classifier>
+			<exclusions>
+				<exclusion>
+					<groupId>*</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
 
