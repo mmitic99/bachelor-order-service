@@ -9,15 +9,18 @@ import bachelor.OrderService.model.Order;
 import bachelor.OrderService.model.Product;
 import bachelor.OrderService.model.Purchaser;
 import bachelor.OrderService.repository.OrderRepository;
+import bachelor.OrderService.service.AwsKeyManagementService;
 import bachelor.OrderService.service.OrderService;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+import software.amazon.awssdk.core.SdkBytes;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 
@@ -28,9 +31,12 @@ public class OrderServiceImpl implements OrderService {
     private final InventoryServiceApi inventoryServiceApi;
     private final ModelMapper mapper;
     private final Gson gson;
+    private final AwsKeyManagementService awsKeyManagementService;
+
 
     @Override
     public Order createOrder(OrderDto orderDto) {
+
         if (orderDto.getProducts().isEmpty()) {
             throw new BadRequestException("Empty ordered products list");
         }
@@ -64,37 +70,40 @@ public class OrderServiceImpl implements OrderService {
 
     private List<Product> removeProductFromInventory(List<ProductDto> productsDto) {
         if (productsDto.size() == 1) {
-            //TODO: add KMS encoding
             String json = gson.toJson(productsDto.get(0));
-            byte[] bytes = Base64.getEncoder().encode(json.getBytes());
-            ///////
+            System.out.println("Method removeProductFromInventory - json param: " + json);
 
-            String response = inventoryServiceApi.orderProduct(new String(bytes)).getBody();
+            String keyId = awsKeyManagementService.GetKeyByAlias("bachelor-order");
+            byte[] encrypted = awsKeyManagementService.EncryptText(json, keyId);
+            System.out.println("Method removeProductFromInventory - encrypted json param: " + Arrays.toString(encrypted));
 
-            //TODO: add KMS decoding
-            byte[] responseBytes = Base64.getDecoder().decode(response.getBytes());
-            Product product = gson.fromJson(new String(responseBytes), Product.class);
-            ///////
+            byte[] response = inventoryServiceApi.orderProduct(encrypted).getBody();
+            System.out.println("Method removeProductFromInventory - response: " + Arrays.toString(response));
+
+            String decrypted = awsKeyManagementService.DecryptText(response);
+            System.out.println("Method removeProductFromInventory - decrypted response: " + decrypted);
+
+            Product product = gson.fromJson(decrypted, Product.class);
 
             return new ArrayList<>() {{
                 add(product);
             }};
         } else {
 
-            //TODO: add KMS encoding
             String json = gson.toJson(productsDto);
-            byte[] bytes = Base64.getEncoder().encode(json.getBytes());
-            ///////
+            System.out.println("Method removeProductFromInventory - json param: " + json);
 
-            String response = inventoryServiceApi.orderProducts(new String(bytes)).getBody();
+            String keyId = awsKeyManagementService.GetKeyByAlias("bachelor-order");
+            byte[] encrypted = awsKeyManagementService.EncryptText(json, keyId);
+            System.out.println("Method removeProductFromInventory - encrypted json param: " + Arrays.toString(encrypted));
 
-            //TODO: add KMS decoding
-            byte[] responseBytes = Base64.getDecoder().decode(response.getBytes());
+            byte[] response = inventoryServiceApi.orderProducts(encrypted).getBody();
+            System.out.println("Method removeProductFromInventory - response: " + Arrays.toString(response));
+            Type listType = new TypeToken<ArrayList<Product>>() {}.getType();
+            String decrypted = awsKeyManagementService.DecryptText(response);
+            System.out.println("Method removeProductFromInventory - decrypted response: " + decrypted);
+            List<Product> products = gson.fromJson(decrypted, listType);
 
-            Type listType = new TypeToken<ArrayList<Product>>() {
-            }.getType();
-            List<Product> products = gson.fromJson(new String(responseBytes), listType);
-            ///////
             return products;
         }
     }
