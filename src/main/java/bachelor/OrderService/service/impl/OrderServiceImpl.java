@@ -14,14 +14,13 @@ import bachelor.OrderService.service.OrderService;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import lombok.AllArgsConstructor;
+import org.bson.types.ObjectId;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
-import software.amazon.awssdk.core.SdkBytes;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.List;
 
 @Service
@@ -68,6 +67,30 @@ public class OrderServiceImpl implements OrderService {
         return orderRepository.save(order);
     }
 
+    @Override
+    public OrderDto getById(String id) {
+        if (ObjectId.isValid(id)) {
+            ObjectId objectId = new ObjectId(id);
+            Order order = orderRepository.findById(objectId).orElseThrow(() -> new BadRequestException("Product is not found"));
+
+            Type listType = new TypeToken<ArrayList<ProductDto>>() {
+            }.getType();
+            return OrderDto.builder().
+                    city(order.getAddress().getCity()).
+                    streetAndNumber(order.getAddress().getStreetAndNumber()).
+                    postalCode(order.getAddress().getPostalCode()).
+                    name(order.getPurchaser().getName()).
+                    surname(order.getPurchaser().getSurname()).
+                    email(order.getPurchaser().getEmail()).
+                    phoneNumber(order.getPurchaser().getPhoneNumber()).
+                    products(mapper.map(order.getProducts(), listType)).
+                    note(order.getNote()).
+                    build();
+        } else {
+            throw new BadRequestException("Product id is invalid");
+        }
+    }
+
     private List<Product> removeProductFromInventory(List<ProductDto> productsDto) {
         if (productsDto.size() == 1) {
             String json = gson.toJson(productsDto.get(0));
@@ -99,7 +122,8 @@ public class OrderServiceImpl implements OrderService {
 
             byte[] response = inventoryServiceApi.orderProducts(encrypted).getBody();
             System.out.println("Method removeProductFromInventory - response: " + Arrays.toString(response));
-            Type listType = new TypeToken<ArrayList<Product>>() {}.getType();
+            Type listType = new TypeToken<ArrayList<Product>>() {
+            }.getType();
             String decrypted = awsKeyManagementService.DecryptText(response);
             System.out.println("Method removeProductFromInventory - decrypted response: " + decrypted);
             List<Product> products = gson.fromJson(decrypted, listType);

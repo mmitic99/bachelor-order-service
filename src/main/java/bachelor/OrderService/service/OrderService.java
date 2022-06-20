@@ -5,4 +5,6 @@ import bachelor.OrderService.model.Order;
 
 public interface OrderService {
     Order createOrder(OrderDto orderDto);
+
+    OrderDto getById(String id);
 }
