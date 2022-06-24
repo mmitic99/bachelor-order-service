@@ -9,6 +9,7 @@ import software.amazon.awssdk.services.kms.KmsClient;
 import software.amazon.awssdk.services.kms.model.*;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
 @Service
 @AllArgsConstructor
@@ -19,11 +20,11 @@ public class AwsKeyManagementServiceImpl implements AwsKeyManagementService {
     @Override
     public String GetKeyByAlias(String alias) {
         var aliasResponse = kmsClient.listAliases(ListAliasesRequest.builder().limit(100).build());
-        if(aliasResponse == null || aliasResponse.aliases() == null){
+        if (aliasResponse == null || aliasResponse.aliases() == null) {
             throw new BadRequestException("Aliases are empty.");
         }
         var foundAlias = aliasResponse.aliases().stream().filter(aliasR -> aliasR.aliasName().equals("alias/" + alias)).findFirst().orElse(null);
-        if(foundAlias != null){
+        if (foundAlias != null) {
             return foundAlias.targetKeyId();
         }
         throw new BadRequestException("Alias not found");
@@ -31,7 +32,7 @@ public class AwsKeyManagementServiceImpl implements AwsKeyManagementService {
 
     @Override
     public byte[] EncryptText(String textToEncrypt, String keyId) {
-        if(textToEncrypt == null || textToEncrypt.isBlank()){
+        if (textToEncrypt == null || textToEncrypt.isBlank()) {
             return null;
         }
 
@@ -44,7 +45,7 @@ public class AwsKeyManagementServiceImpl implements AwsKeyManagementService {
 
     @Override
     public String DecryptText(byte[] encryptedText) {
-        if(encryptedText == null){
+        if (encryptedText == null) {
             return "";
         }
         SdkBytes input = SdkBytes.fromByteArray(encryptedText);
@@ -53,7 +54,7 @@ public class AwsKeyManagementServiceImpl implements AwsKeyManagementService {
         DecryptResponse decryptResponse = kmsClient.decrypt(decryptRequest);
 
 
-        if(decryptResponse != null){
+        if (decryptResponse != null) {
             return new String(decryptResponse.plaintext().asByteArray());
         }
 

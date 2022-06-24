@@ -21,15 +21,3 @@ public class OrderServiceApplication {
 	}
 
 }
-@RestController
-@RequestMapping("order")
-class SimpleBookRestController {
-
-	@Autowired
-	private InventoryServiceApi inventoryServiceApi;
-
-	@GetMapping(value = "", produces = "application/json")
-	public String get() {
-		return inventoryServiceApi.get("order");
-	}
-}

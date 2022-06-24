@@ -3,13 +3,10 @@ package bachelor.OrderService.controller;
 import bachelor.OrderService.dto.OrderDto;
 import bachelor.OrderService.model.Order;
 import bachelor.OrderService.service.OrderService;
-import com.google.gson.Gson;
 import lombok.AllArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import javax.ws.rs.PathParam;
 
 @RestController
 @RequestMapping(value = "/order", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -17,7 +14,6 @@ import javax.ws.rs.PathParam;
 public class OrderController {
 
     private final OrderService orderService;
-    private final Gson gson;
 
     @PostMapping("")
     public ResponseEntity<Order> createOrder(@RequestBody OrderDto orderDto){
@@ -28,5 +24,4 @@ public class OrderController {
     public ResponseEntity<OrderDto> getOrder(@PathVariable String id){
         return ResponseEntity.ok(orderService.getById(id));
     }
-
 }
