@@ -22,4 +22,5 @@ public class Order {
     private Purchaser purchaser;
     private Address address;
     private String note;
+    private String key;
 }

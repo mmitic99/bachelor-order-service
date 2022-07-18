@@ -1,5 +1,6 @@
 package bachelor.OrderService.service.impl;
 
+import bachelor.OrderService.dto.DataKeyDto;
 import bachelor.OrderService.exception.BadRequestException;
 import bachelor.OrderService.service.AwsKeyManagementService;
 import lombok.AllArgsConstructor;
@@ -59,5 +60,36 @@ public class AwsKeyManagementServiceImpl implements AwsKeyManagementService {
         }
 
         throw new BadRequestException("Decrypt error");
+    }
+
+    @Override
+    public String DecryptKey(byte[] encryptedText) {
+        if (encryptedText == null) {
+            return "";
+        }
+        SdkBytes input = SdkBytes.fromByteArray(encryptedText);
+        DecryptRequest decryptRequest = DecryptRequest.builder().ciphertextBlob(input).build();
+
+        DecryptResponse decryptResponse = kmsClient.decrypt(decryptRequest);
+
+
+        if (decryptResponse != null) {
+            return Base64.getEncoder().encodeToString(decryptResponse.plaintext().asByteArray());
+        }
+
+        throw new BadRequestException("Decrypt error");
+    }
+
+    @Override
+    public DataKeyDto GenerateDataKey() {
+
+        String keyId = GetKeyByAlias("bachelor-order");
+
+        var response = kmsClient.generateDataKey(GenerateDataKeyRequest.builder().keyId(keyId).keySpec(DataKeySpec.AES_128).build());
+
+        var plain = Base64.getEncoder().encodeToString(response.plaintext().asByteArray());
+        var cipher = Base64.getEncoder().encodeToString(response.ciphertextBlob().asByteArray());
+
+        return DataKeyDto.builder().plaintext(plain).ciphertext(cipher).build();
     }
 }

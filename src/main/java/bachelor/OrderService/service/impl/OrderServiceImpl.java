@@ -58,6 +58,7 @@ public class OrderServiceImpl implements OrderService {
                 .build();
 
         Order order = Order.builder()
+                .key(awsKeyManagementService.GenerateDataKey().getCiphertext())
                 .products(products)
                 .purchaser(purchaser)
                 .address(address)
