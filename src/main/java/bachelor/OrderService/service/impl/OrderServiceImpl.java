@@ -93,43 +93,47 @@ public class OrderServiceImpl implements OrderService {
     }
 
     private List<Product> removeProductFromInventory(List<ProductDto> productsDto) {
-        if (productsDto.size() == 1) {
-            String json = gson.toJson(productsDto.get(0));
-            System.out.println("Method removeProductFromInventory - json param: " + json);
+        try {
+            if (productsDto.size() == 1) {
+                String json = gson.toJson(productsDto.get(0));
+                System.out.println("Method removeProductFromInventory - json param: " + json);
 
-            String keyId = awsKeyManagementService.GetKeyByAlias("bachelor-order");
-            byte[] encrypted = awsKeyManagementService.EncryptText(json, keyId);
-            System.out.println("Method removeProductFromInventory - encrypted json param: " + Arrays.toString(encrypted));
+                String keyId = awsKeyManagementService.GetKeyByAlias("bachelor-order");
+                byte[] encrypted = awsKeyManagementService.EncryptText(json, keyId);
+                System.out.println("Method removeProductFromInventory - encrypted json param: " + Arrays.toString(encrypted));
 
-            byte[] response = inventoryServiceApi.orderProduct(encrypted).getBody();
-            System.out.println("Method removeProductFromInventory - response: " + Arrays.toString(response));
+                byte[] response = inventoryServiceApi.orderProduct(encrypted).getBody();
+                System.out.println("Method removeProductFromInventory - response: " + Arrays.toString(response));
 
-            String decrypted = awsKeyManagementService.DecryptText(response);
-            System.out.println("Method removeProductFromInventory - decrypted response: " + decrypted);
+                String decrypted = awsKeyManagementService.DecryptText(response);
+                System.out.println("Method removeProductFromInventory - decrypted response: " + decrypted);
 
-            Product product = gson.fromJson(decrypted, Product.class);
+                Product product = gson.fromJson(decrypted, Product.class);
 
-            return new ArrayList<>() {{
-                add(product);
-            }};
-        } else {
+                return new ArrayList<>() {{
+                    add(product);
+                }};
+            } else {
 
-            String json = gson.toJson(productsDto);
-            System.out.println("Method removeProductFromInventory - json param: " + json);
+                String json = gson.toJson(productsDto);
+                System.out.println("Method removeProductFromInventory - json param: " + json);
 
-            String keyId = awsKeyManagementService.GetKeyByAlias("bachelor-order");
-            byte[] encrypted = awsKeyManagementService.EncryptText(json, keyId);
-            System.out.println("Method removeProductFromInventory - encrypted json param: " + Arrays.toString(encrypted));
+                String keyId = awsKeyManagementService.GetKeyByAlias("bachelor-order");
+                byte[] encrypted = awsKeyManagementService.EncryptText(json, keyId);
+                System.out.println("Method removeProductFromInventory - encrypted json param: " + Arrays.toString(encrypted));
 
-            byte[] response = inventoryServiceApi.orderProducts(encrypted).getBody();
-            System.out.println("Method removeProductFromInventory - response: " + Arrays.toString(response));
-            Type listType = new TypeToken<ArrayList<Product>>() {
-            }.getType();
-            String decrypted = awsKeyManagementService.DecryptText(response);
-            System.out.println("Method removeProductFromInventory - decrypted response: " + decrypted);
-            List<Product> products = gson.fromJson(decrypted, listType);
+                byte[] response = inventoryServiceApi.orderProducts(encrypted).getBody();
+                System.out.println("Method removeProductFromInventory - response: " + Arrays.toString(response));
+                Type listType = new TypeToken<ArrayList<Product>>() {
+                }.getType();
+                String decrypted = awsKeyManagementService.DecryptText(response);
+                System.out.println("Method removeProductFromInventory - decrypted response: " + decrypted);
+                List<Product> products = gson.fromJson(decrypted, listType);
 
-            return products;
+                return products;
+            }
+        } catch (Exception e) {
+            throw new BadRequestException(e.getMessage());
         }
     }
 }
